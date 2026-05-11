@@ -1,0 +1,44 @@
+name: Update Changelog
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate CHANGELOG.md
+        run: node scripts/generate-changelog.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update CHANGELOG for ${{ github.ref_name }}"
+          branch: changelog/${{ github.ref_name }}
+          title: "chore: update CHANGELOG for ${{ github.ref_name }}"
+          body: |
+            Automated changelog update for release **${{ github.ref_name }}**.
+
+            This PR was generated automatically when the release was published.
+            Review and merge to update CHANGELOG.md on master.
+          labels: |
+            changelog
+          assignees: sdkasper
