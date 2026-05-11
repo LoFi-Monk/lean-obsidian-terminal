@@ -84,10 +84,15 @@ On Windows, the plugin uses the ConPTY backend (correct UTF-8 and emoji support)
 ## Related documents
 
 See [Usage](docs/usage.md) for the full command reference.
+
 See [Settings](docs/settings.md) for all configuration options.
+
 See [Session Persistence](docs/session-persistence.md) for how tab state is saved and restored.
+
 See [Claude Code Integration](docs/claude-code-integration.md) for setup and usage.
+
 See [URI Handler](docs/uri-handler.md) for the `obsidian://lean-terminal` protocol reference.
+
 See [Security](docs/security.md) for the security review summary.
 
 ## Feedback
