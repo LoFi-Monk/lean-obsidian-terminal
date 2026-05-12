@@ -185,14 +185,14 @@ export default class TerminalPlugin extends Plugin {
 
     // Keep terminal themes in sync with Obsidian's dark/light mode toggle.
     // Only fires when the dark/light class actually flips, not on every class change.
-    let lastDark = document.body.classList.contains("theme-dark");
+    let lastDark = activeDocument.body.classList.contains("theme-dark");
     this.themeObserver = new MutationObserver(() => {
-      const isDark = document.body.classList.contains("theme-dark");
+      const isDark = activeDocument.body.classList.contains("theme-dark");
       if (isDark === lastDark) return;
       lastDark = isDark;
       this.updateTheme();
     });
-    this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    this.themeObserver.observe(activeDocument.body, { attributes: true, attributeFilter: ["class"] });
   }
 
   onunload(): void {
@@ -200,7 +200,7 @@ export default class TerminalPlugin extends Plugin {
     this.themeObserver = null;
 
     // Detach after a tick to avoid disrupting the settings modal
-    setTimeout(() => {
+    window.setTimeout(() => {
       this.app.workspace.detachLeavesOfType(VIEW_TYPE_TERMINAL);
     }, 0);
   }
@@ -248,7 +248,7 @@ export default class TerminalPlugin extends Plugin {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_TERMINAL);
     if (leaves.length > 0) {
       const view = leaves[0].view as TerminalView;
-      const state = view.getState() as Record<string, unknown>;
+      const state = view.getState();
       if (Array.isArray(state.tabs) && state.tabs.length > 0 && typeof state.activeIndex === "number") {
         this.settings.lastViewState = state as unknown as SavedViewState;
         void this.saveSettings();
@@ -344,7 +344,7 @@ export default class TerminalPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<TerminalPluginSettings>);
     // tabColors is the only array in settings. Object.assign is shallow,
     // so on a fresh install (data.json has no tabColors) the merged
     // settings would share the reference with DEFAULT_SETTINGS, and any

@@ -76,7 +76,7 @@ export class WikiLinkAutocomplete {
 
   private dropdownEl: HTMLElement | null = null;
   private previewEl: HTMLElement | null = null;
-  private filterTimer: ReturnType<typeof setTimeout> | null = null;
+  private filterTimer: number | null = null;
   private resizeDisposable: IDisposable | null = null;
   private vaultEventRefs: EventRef[] = [];
   /** Snapshot of vault entries taken on activate(); pre-sorted by mtime desc. */
@@ -199,7 +199,7 @@ export class WikiLinkAutocomplete {
 
   dispose(): void {
     if (this.filterTimer) {
-      clearTimeout(this.filterTimer);
+      window.clearTimeout(this.filterTimer);
       this.filterTimer = null;
     }
     this.resizeDisposable?.dispose();
@@ -243,7 +243,7 @@ export class WikiLinkAutocomplete {
     this.selectedIndex = 0;
     this.cachedEntries = null;
     if (this.filterTimer) {
-      clearTimeout(this.filterTimer);
+      window.clearTimeout(this.filterTimer);
       this.filterTimer = null;
     }
     this.removeDropdown();
@@ -289,8 +289,8 @@ export class WikiLinkAutocomplete {
   }
 
   private filterResults(): void {
-    if (this.filterTimer) clearTimeout(this.filterTimer);
-    this.filterTimer = setTimeout(() => {
+    if (this.filterTimer) window.clearTimeout(this.filterTimer);
+    this.filterTimer = window.setTimeout(() => {
       // Late timer fires after dismiss/accept could otherwise resurrect the dropdown.
       if (!this.active) return;
       const q = this.query.toLowerCase();
@@ -384,13 +384,11 @@ export class WikiLinkAutocomplete {
 
     const cursorBottom = offsetY + (cursorY + 1) * cellH;
     if ((containerHeight - cursorBottom) > DROPDOWN_HEIGHT || cursorY < this.terminal.rows / 2) {
-      this.dropdownEl.style.top = `${cursorBottom}px`;
-      this.dropdownEl.style.bottom = "";
+      this.dropdownEl.setCssProps({"--lean-terminal-dropdown-top": `${cursorBottom}px`, "--lean-terminal-dropdown-bottom": ""});
     } else {
-      this.dropdownEl.style.bottom = `${containerHeight - (offsetY + cursorY * cellH)}px`;
-      this.dropdownEl.style.top = "";
+      this.dropdownEl.setCssProps({"--lean-terminal-dropdown-bottom": `${containerHeight - (offsetY + cursorY * cellH)}px`, "--lean-terminal-dropdown-top": ""});
     }
-    this.dropdownEl.style.left = `${left}px`;
+    this.dropdownEl.setCssProps({"--lean-terminal-dropdown-left": `${left}px`});
   }
 
   private removeDropdown(): void {
@@ -433,7 +431,7 @@ export class WikiLinkAutocomplete {
 
     const cache = this.app.metadataCache.getFileCache(file);
     const inlineTags = cache?.tags?.map((t) => t.tag) ?? [];
-    const fmTagsRaw = cache?.frontmatter?.tags;
+    const fmTagsRaw = cache?.frontmatter?.tags as unknown;
     const fmTags: string[] = Array.isArray(fmTagsRaw)
       ? fmTagsRaw.map(String)
       : typeof fmTagsRaw === "string"

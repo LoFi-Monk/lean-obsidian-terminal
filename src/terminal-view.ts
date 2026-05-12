@@ -9,7 +9,7 @@ export class TerminalView extends ItemView {
   private plugin: TerminalPlugin;
   private tabManager: TerminalTabManager | null = null;
   private resizeObserver: ResizeObserver | null = null;
-  private resizeTimer: ReturnType<typeof setTimeout> | null = null;
+  private resizeTimer: number | null = null;
   private viewContainer: HTMLElement | null = null;
   /**
    * State passed to setState() before onOpen() has constructed the tab manager.
@@ -90,8 +90,8 @@ export class TerminalView extends ItemView {
 
     // Resize observer for auto-fit
     this.resizeObserver = new ResizeObserver(() => {
-      if (this.resizeTimer) clearTimeout(this.resizeTimer);
-      this.resizeTimer = setTimeout(() => {
+      if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
+      this.resizeTimer = window.setTimeout(() => {
         this.tabManager?.fitActive();
       }, 50);
     });
@@ -112,7 +112,7 @@ export class TerminalView extends ItemView {
 
   // async: satisfies ItemView.onClose() → Promise<void>; no actual async work here
   async onClose(): Promise<void> {
-    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+    if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
     this.resizeObserver?.disconnect();
     this.tabManager?.destroyAll();
     this.tabManager = null;
