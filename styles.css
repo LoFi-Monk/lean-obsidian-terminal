@@ -566,6 +566,9 @@
 /* --- Wiki-link autocomplete dropdown --------------------------------- */
 .lean-wikilink-dropdown {
   position: absolute;
+  top: var(--lean-terminal-dropdown-top, auto);
+  bottom: var(--lean-terminal-dropdown-bottom, auto);
+  left: var(--lean-terminal-dropdown-left, auto);
   z-index: 100;
   min-width: 260px;
   max-width: 420px;

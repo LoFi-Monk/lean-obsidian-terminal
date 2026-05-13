@@ -285,6 +285,6 @@ export const BUILTIN_THEMES: Record<string, ITheme> = {
 
 /** Detect whether Obsidian is currently in dark mode. */
 export function isObsidianDark(): boolean {
-  return document.body.classList.contains("theme-dark");
+  return activeDocument.body.classList.contains("theme-dark");
 }
 

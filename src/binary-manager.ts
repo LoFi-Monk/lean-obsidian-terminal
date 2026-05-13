@@ -23,7 +23,6 @@ export class BinaryManager {
   private manifestPath: string;
   private readonly fs: typeof import("fs");
   private readonly path: typeof import("path");
-  private readonly os: typeof import("os");
   private readonly childProcess: typeof import("child_process");
   private readonly crypto: typeof import("crypto");
 
@@ -31,7 +30,6 @@ export class BinaryManager {
     this.pluginDir = pluginDir;
     this.fs = window.require("fs") as typeof import("fs");
     this.path = window.require("path") as typeof import("path");
-    this.os = window.require("os") as typeof import("os");
     this.childProcess = window.require("child_process") as typeof import("child_process");
     this.crypto = window.require("crypto") as typeof import("crypto");
 
@@ -100,7 +98,7 @@ export class BinaryManager {
       if (!version) {
         const releaseUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
         const releaseResp = await requestUrl({ url: releaseUrl });
-        version = releaseResp.json.tag_name.replace(/^v/, "");
+        version = (releaseResp.json as { tag_name: string }).tag_name.replace(/^v/, "");
       }
 
       const platform = process.platform;
@@ -112,7 +110,7 @@ export class BinaryManager {
       // Download checksums — required; abort if unavailable
       this.setStatus("downloading", "Downloading checksums...");
       const checksumResp = await requestUrl({ url: `${baseUrl}/checksums.json` });
-      const checksums: Record<string, string> = checksumResp.json;
+      const checksums = checksumResp.json as Record<string, string>;
 
       // Download binary zip
       this.setStatus("downloading", `Downloading ${assetName}...`);
@@ -136,7 +134,7 @@ export class BinaryManager {
 
       // Write zip to temp file
       this.setStatus("downloading", "Extracting...");
-      const tmpDir = this.os.tmpdir();
+      const tmpDir = process.env.TMPDIR ?? process.env.TEMP ?? process.env.TMP ?? this.path.join(this.pluginDir, "tmp");
       const tmpZip = this.path.join(tmpDir, assetName);
       this.fs.writeFileSync(tmpZip, zipBuffer);
 
@@ -182,7 +180,7 @@ export class BinaryManager {
       // Apply Windows patch
       if (platform === "win32") {
         const patchDest = this.path.join(this.nodePtyDir, "lib", "windowsConoutConnection.js");
-        this.fs.writeFileSync(patchDest, WINDOWS_CONOUT_PATCH, "utf-8");
+        this.fs.writeFileSync(patchDest, WINDOWS_CONOUT_PATCH as string, "utf-8");
       }
 
       // Write binary manifest
@@ -221,9 +219,9 @@ export class BinaryManager {
   getVersion(): string | null {
     try {
       if (this.fs.existsSync(this.manifestPath)) {
-        const manifest: BinaryManifest = JSON.parse(
+        const manifest = JSON.parse(
           this.fs.readFileSync(this.manifestPath, "utf-8")
-        );
+        ) as BinaryManifest;
         return manifest.version;
       }
     } catch {

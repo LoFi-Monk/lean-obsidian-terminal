@@ -1,6 +1,6 @@
 import { Notice, App, FileSystemAdapter } from "obsidian";
 import type { AppWithDrag, ElectronWithWebUtils, FileWithPath } from "./obsidian-internals";
-import { Terminal, type ILink, type ILinkProvider } from "@xterm/xterm";
+import { Terminal, type ILink } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { SerializeAddon } from "@xterm/addon-serialize";
@@ -121,7 +121,7 @@ function playNotificationSound(sound: NotificationSound, volume: number): void {
         o2.start(ctx.currentTime + 0.12);
         o2.stop(ctx.currentTime + 0.24);
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
-        setTimeout(() => void ctx.close(), 350);
+        window.setTimeout(() => void ctx.close(), 350);
         break;
       }
       case "ping": {
@@ -136,7 +136,7 @@ function playNotificationSound(sound: NotificationSound, volume: number): void {
         o.start();
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
         o.stop(ctx.currentTime + 0.1);
-        setTimeout(() => void ctx.close(), 150);
+        window.setTimeout(() => void ctx.close(), 150);
         break;
       }
       case "pop": {
@@ -151,7 +151,7 @@ function playNotificationSound(sound: NotificationSound, volume: number): void {
         o.start();
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
         o.stop(ctx.currentTime + 0.08);
-        setTimeout(() => void ctx.close(), 130);
+        window.setTimeout(() => void ctx.close(), 130);
         break;
       }
       default: {
@@ -166,7 +166,7 @@ function playNotificationSound(sound: NotificationSound, volume: number): void {
         o.start();
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
         o.stop(ctx.currentTime + 0.15);
-        setTimeout(() => void ctx.close(), 200);
+        window.setTimeout(() => void ctx.close(), 200);
         break;
       }
     }
@@ -332,11 +332,11 @@ export class TerminalTabManager {
    */
   private setupAutoResume(session: TerminalSession, terminal: Terminal): void {
     let executed = false;
-    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    let fallbackTimer: number | null = null;
     let oscDisposable: { dispose: () => void } | null = null;
 
     const cleanup = (): void => {
-      if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+      if (fallbackTimer) { window.clearTimeout(fallbackTimer); fallbackTimer = null; }
       if (oscDisposable) { oscDisposable.dispose(); oscDisposable = null; }
     };
 
@@ -357,7 +357,7 @@ export class TerminalTabManager {
     });
 
     // Fallback for shells without OSC 133 support (e.g. cmd.exe): run after 2s
-    fallbackTimer = setTimeout(runCommand, 2000);
+    fallbackTimer = window.setTimeout(runCommand, 2000);
 
     // Ensure the timer and OSC handler are cancelled if the tab closes before
     // the command fires (prevents writes to a dead PTY and handler leaks).
@@ -372,11 +372,11 @@ export class TerminalTabManager {
    */
   private setupStartupCommand(session: TerminalSession, terminal: Terminal, command: string): void {
     let executed = false;
-    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    let fallbackTimer: number | null = null;
     let oscDisposable: { dispose: () => void } | null = null;
 
     const cleanup = (): void => {
-      if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+      if (fallbackTimer) { window.clearTimeout(fallbackTimer); fallbackTimer = null; }
       if (oscDisposable) { oscDisposable.dispose(); oscDisposable = null; }
     };
 
@@ -392,7 +392,7 @@ export class TerminalTabManager {
       return false;
     });
 
-    fallbackTimer = setTimeout(run, 2000);
+    fallbackTimer = window.setTimeout(run, 2000);
 
     // Ensure the timer and OSC handler are cancelled if the tab closes before
     // the command fires.
@@ -483,7 +483,7 @@ export class TerminalTabManager {
   }
 
   private installDragDrop(containerEl: HTMLElement, pty: PtyManager): HTMLElement {
-    const dragLabel = document.body.createDiv({ cls: "terminal-drag-label" });
+    const dragLabel = activeDocument.body.createDiv({ cls: "terminal-drag-label" });
     dragLabel.setText("Paste path to file");
 
     const isFileDrag = (e: DragEvent): boolean =>
@@ -691,7 +691,7 @@ export class TerminalTabManager {
     // Double-rAF: first frame renders the container, second guarantees layout is
     // complete so fitAddon reads correct dimensions. More reliable than a fixed
     // 100ms timeout, which is too short on slow startup and wasted on fast ones.
-    requestAnimationFrame(() => { requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => { window.requestAnimationFrame(() => {
       // Abort if the session was destroyed while waiting (e.g. openTabOrView
       // destroy-and-recreate flow replaces a default tab during these two frames)
       if (!this.sessions.some((s) => s.id === session.id)) return;
@@ -825,7 +825,7 @@ export class TerminalTabManager {
         session.containerEl.removeClass("terminal-session-hidden");
         // One rAF is enough here: the element is already in the DOM, we just
         // need to wait for the CSS visibility change to be painted before fit.
-        requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
           try {
             session.fitAddon.fit();
             session.pty.resize(session.terminal.cols, session.terminal.rows);
@@ -954,7 +954,7 @@ export class TerminalTabManager {
    * (e.g. setState after onOpen's default-tab creation) to avoid polluting recents.
    */
   destroyAll(saveToRecents = true): void {
-    document.querySelector(".terminal-tab-context-menu")?.remove();
+    activeDocument.querySelector(".terminal-tab-context-menu")?.remove();
     for (const session of this.sessions) {
       if (saveToRecents) {
         this.onSessionClose?.(this.captureSession(session));
@@ -977,7 +977,7 @@ export class TerminalTabManager {
     const session = this.sessions.find((s) => s.id === id);
     if (!session) return;
 
-    const input = document.createElement("input");
+    const input = activeDocument.createElement("input");
     input.type = "text";
     input.value = session.name;
     input.className = "terminal-tab-rename-input";
@@ -1010,9 +1010,9 @@ export class TerminalTabManager {
     if (!session) return;
 
     // Remove any existing context menu
-    document.querySelector(".terminal-tab-context-menu")?.remove();
+    activeDocument.querySelector(".terminal-tab-context-menu")?.remove();
 
-    const menu = document.createElement("div");
+    const menu = activeDocument.createElement("div");
     menu.className = "terminal-tab-context-menu";
     menu.style.left = `${e.pageX}px`;
     menu.style.top = `${e.pageY}px`;
@@ -1061,16 +1061,16 @@ export class TerminalTabManager {
       });
     }
 
-    document.body.appendChild(menu);
+    activeDocument.body.appendChild(menu);
 
     // Close on click outside
     const close = (evt: MouseEvent) => {
       if (!menu.contains(evt.target as Node)) {
         menu.remove();
-        document.removeEventListener("click", close, true);
+        activeDocument.removeEventListener("click", close, true);
       }
     };
-    setTimeout(() => document.addEventListener("click", close, true), 0);
+    window.setTimeout(() => activeDocument.addEventListener("click", close, true), 0);
   }
 
   updateBackgroundColor(): void {
