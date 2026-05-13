@@ -37,14 +37,15 @@ export function encodeProjectDir(cwd: string): string {
  */
 export async function scanClaudeProjectSessions(
   cwd: string,
-  max: number
+  max: number,
+  claudeProjectsDir: string
 ): Promise<ClaudeSessionEntry[]> {
+  if (!claudeProjectsDir) return [];
   const path = window.require("path") as typeof import("path");
   const fs = (window.require("fs") as typeof import("fs")).promises;
 
   const encoded = encodeProjectDir(cwd);
-  const homeDir = process.env.HOME ?? process.env.USERPROFILE ?? "";
-  const projectDir = path.join(homeDir, ".claude", "projects", encoded);
+  const projectDir = path.join(claudeProjectsDir, encoded);
 
   let files: string[];
   try {
@@ -186,7 +187,7 @@ export async function refreshClaudeRegistry(plugin: TerminalPlugin): Promise<voi
     return;
   }
 
-  const entries = await scanClaudeProjectSessions(cwd, plugin.settings.claudeSessionsMax);
+  const entries = await scanClaudeProjectSessions(cwd, plugin.settings.claudeSessionsMax, plugin.settings.claudeSessionsDir);
   const markdown = generateRegistryMarkdown(entries);
 
   try {
