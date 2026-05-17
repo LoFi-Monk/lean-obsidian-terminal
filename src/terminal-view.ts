@@ -110,12 +110,13 @@ export class TerminalView extends ItemView {
     );
 
     // Intercept Escape in the capture phase to prevent Obsidian's global focus-switching.
-    // We use the window object to ensure we catch it before Obsidian's document/window listeners.
-    this.registerDomEvent(window, "keydown", (e: KeyboardEvent) => {
+    // We register on both window and document to ensure we catch it before Obsidian's handlers.
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         const session = this.tabManager?.getActiveSession();
-        const activeEl = activeDocument.activeElement;
+        const activeEl = activeDocument.activeElement as HTMLElement;
         
+        // Check if focus is anywhere inside our terminal view container
         if (session && activeEl && this.containerEl.contains(activeEl)) {
           // If we are in an input (search/rename) that isn't the terminal textarea,
           // let it bubble so the local handler works.
@@ -132,7 +133,10 @@ export class TerminalView extends ItemView {
           session.pty.write("\x1b");
         }
       }
-    }, { capture: true });
+    };
+
+    this.registerDomEvent(window, "keydown", handleEscape, { capture: true });
+    this.registerDomEvent(activeDocument, "keydown", handleEscape, { capture: true });
   }
 
   // async: satisfies ItemView.onClose() → Promise<void>; no actual async work here
