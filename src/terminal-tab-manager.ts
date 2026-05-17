@@ -605,6 +605,12 @@ export class TerminalTabManager {
       if (s?.autocomplete?.handleKey(e)) return false;
 
       if (e.type !== "keydown") return true;
+
+      // Catch the Escape key before Obsidian handles it
+      if (e.key === "Escape") {
+        return false;
+      }
+
       const mod = e.metaKey || e.ctrlKey;
 
       // Search shortcut
