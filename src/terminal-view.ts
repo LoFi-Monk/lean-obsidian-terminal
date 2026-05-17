@@ -40,10 +40,6 @@ export class TerminalView extends ItemView {
     container.empty();
     container.addClass("terminal-view-container");
     this.viewContainer = container;
-    this.applyTabBarPosition();
-
-    // Tab bar
-    const tabBarEl = container.createDiv({ cls: "terminal-tab-bar" });
 
     // Terminal host (all session containers go here)
     const terminalHostEl = container.createDiv({ cls: "terminal-host" });
@@ -66,7 +62,7 @@ export class TerminalView extends ItemView {
     // Create tab manager and first terminal
     const tabManagerOpts: TabManagerOptions = {
       app: this.app,
-      tabBarEl,
+      tabBarEl: container.createDiv({ cls: "terminal-tab-bar", attr: { style: "display: none" } }), // hidden stub
       terminalHostEl,
       settings: this.plugin.settings,
       cwd,
@@ -175,15 +171,6 @@ export class TerminalView extends ItemView {
 
   updateLineHeight(): void {
     this.tabManager?.updateLineHeight();
-  }
-
-  applyTabBarPosition(): void {
-    if (!this.viewContainer) return;
-    this.viewContainer.removeClass("terminal-tabs-left");
-    this.viewContainer.removeClass("terminal-tabs-right");
-    const pos = this.plugin.settings.tabBarPosition;
-    if (pos === "left") this.viewContainer.addClass("terminal-tabs-left");
-    else if (pos === "right") this.viewContainer.addClass("terminal-tabs-right");
   }
 
   getState(): Record<string, unknown> {
