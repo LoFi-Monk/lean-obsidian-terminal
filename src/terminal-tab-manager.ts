@@ -605,6 +605,20 @@ export class TerminalTabManager {
       if (s?.autocomplete?.handleKey(e)) return false;
 
       if (e.type !== "keydown") return true;
+
+      // Catch the Escape key and treat it as an interrupt/SIGINT for terminal agents
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        const s = this.sessions.find((s) => s.id === id);
+        if (s) {
+          s.pty.write("\x1b"); // ESC
+          s.pty.write("\x03"); // SIGINT (Ctrl+C)
+          s.terminal.focus();
+        }
+        return false;
+      }
+
       const mod = e.metaKey || e.ctrlKey;
 
       // Search shortcut
