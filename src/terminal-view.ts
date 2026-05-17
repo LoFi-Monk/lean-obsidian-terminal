@@ -127,16 +127,26 @@ export class TerminalView extends ItemView {
             return;
           }
 
-          // Terminal focus or container focus — swallow and send to PTY
+          // Terminal focus or container focus — swallow
           e.preventDefault();
           e.stopImmediatePropagation();
-          session.pty.write("\x1b");
+
+          // Only write to PTY on keydown to avoid duplicate signals
+          if (e.type === "keydown") {
+            session.pty.write("\x1b"); // ESC
+            session.pty.write("\x03"); // SIGINT (Ctrl+C)
+            session.terminal.focus();
+          }
         }
       }
     };
 
     this.registerDomEvent(window, "keydown", handleEscape, { capture: true });
+    this.registerDomEvent(window, "keyup", handleEscape, { capture: true });
+    this.registerDomEvent(window, "keypress", handleEscape, { capture: true });
     this.registerDomEvent(activeDocument, "keydown", handleEscape, { capture: true });
+    this.registerDomEvent(activeDocument, "keyup", handleEscape, { capture: true });
+    this.registerDomEvent(activeDocument, "keypress", handleEscape, { capture: true });
   }
 
   // async: satisfies ItemView.onClose() → Promise<void>; no actual async work here
