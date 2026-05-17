@@ -106,16 +106,15 @@ export class TerminalView extends ItemView {
     );
 
     // Intercept Escape in the capture phase to prevent Obsidian's global focus-switching.
-    // We register on both window and document to ensure we catch it before Obsidian's handlers.
-    const handleEscape = (e: KeyboardEvent) => {
+    // We register on the containerEl in the capture phase to catch it before it bubbles
+    // up to the document/window where Obsidian's global listeners live.
+    this.registerDomEvent(this.containerEl, "keydown", (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         const session = this.tabManager?.getActiveSession();
         const activeEl = activeDocument.activeElement as HTMLElement;
         
-        // Check if focus is anywhere inside our terminal view container
+        // If focus is anywhere inside our terminal view container
         if (session && activeEl && this.containerEl.contains(activeEl)) {
-          // If we are in an input (search/rename) that isn't the terminal textarea,
-          // let it bubble so the local handler works.
           const isInput = activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA";
           const isTerminal = activeEl.classList.contains("xterm-helper-textarea");
           
@@ -123,26 +122,14 @@ export class TerminalView extends ItemView {
             return;
           }
 
-          // Terminal focus or container focus — swallow
+          // Terminal focus — swallow and send ESC to PTY
           e.preventDefault();
+          e.stopPropagation();
           e.stopImmediatePropagation();
-
-          // Only write to PTY on keydown to avoid duplicate signals
-          if (e.type === "keydown") {
-            session.pty.write("\x1b"); // ESC
-            session.pty.write("\x03"); // SIGINT (Ctrl+C)
-            session.terminal.focus();
-          }
+          session.pty.write("\x1b");
         }
       }
-    };
-
-    this.registerDomEvent(window, "keydown", handleEscape, { capture: true });
-    this.registerDomEvent(window, "keyup", handleEscape, { capture: true });
-    this.registerDomEvent(window, "keypress", handleEscape, { capture: true });
-    this.registerDomEvent(activeDocument, "keydown", handleEscape, { capture: true });
-    this.registerDomEvent(activeDocument, "keyup", handleEscape, { capture: true });
-    this.registerDomEvent(activeDocument, "keypress", handleEscape, { capture: true });
+    }, { capture: true });
   }
 
   // async: satisfies ItemView.onClose() → Promise<void>; no actual async work here
