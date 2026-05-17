@@ -608,6 +608,10 @@ export class TerminalTabManager {
 
       // Catch the Escape key before Obsidian handles it
       if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        const s = this.sessions.find((s) => s.id === id);
+        if (s) s.pty.write("\x1b");
         return false;
       }
 
